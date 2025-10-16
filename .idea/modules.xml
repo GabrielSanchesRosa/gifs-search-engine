@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/gifs_search_engine.iml" filepath="$PROJECT_DIR$/gifs_search_engine.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/gifs_search_engine_android.iml" filepath="$PROJECT_DIR$/android/gifs_search_engine_android.iml" />
     </modules>
   </component>
 </project>

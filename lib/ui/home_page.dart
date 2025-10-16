@@ -1,7 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:gifs_search_engine/ui/gif_page.dart';
 import 'package:http/http.dart' as http;
+import 'package:share_plus/share_plus.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,10 +23,18 @@ class _HomePageState extends State<HomePage> {
   Future<Map> search() async {
     http.Response response;
 
-    if (wordSearch!.isEmpty) {
-      response = await http.get(Uri.parse("https://api.giphy.com/v1/gifs/search?api_key=kcJ0NfnpErRVw7fVqLx8aRwMmaJC4Hyx&q=$wordSearch&limit=25&offset=$offset&rating=g&lang=en&bundle=messaging_non_clips"));
+    if (wordSearch == null || wordSearch!.isEmpty) {
+      response = await http.get(
+        Uri.parse(
+          "https://api.giphy.com/v1/gifs/trending?api_key=kcJ0NfnpErRVw7fVqLx8aRwMmaJC4Hyx&limit=25&offset=$offset&rating=g&bundle=messaging_non_clips",
+        ),
+      );
     } else {
-      response = await http.get(Uri.parse("https://api.giphy.com/v1/gifs/trending?api_key=kcJ0NfnpErRVw7fVqLx8aRwMmaJC4Hyx&limit=25&offset=$offset&rating=g&bundle=messaging_non_clips"));
+      response = await http.get(
+        Uri.parse(
+          "https://api.giphy.com/v1/gifs/search?api_key=kcJ0NfnpErRVw7fVqLx8aRwMmaJC4Hyx&q=$wordSearch&limit=25&offset=$offset&rating=g&lang=en&bundle=messaging_non_clips",
+        ),
+      );
     }
 
     return json.decode(response.body);
@@ -33,7 +44,9 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
-    search();
+    search().then((map) {
+      print(map);
+    });
   }
 
   @override
@@ -119,10 +132,24 @@ class _HomePageState extends State<HomePage> {
       itemBuilder: (context, index) {
         if (index < snapshot.data["data"].length) {
           return GestureDetector(
-            child: Image.network(
-              snapshot.data["data"][index]["images"]["fixed_height"]["url"],
+            child: FadeInImage.memoryNetwork(
+              placeholder: kTransparentImage,
+              image:
+                  snapshot.data["data"][index]["images"]["fixed_height"]["url"],
               height: 300,
               fit: BoxFit.cover,
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      GifPage(gifData: snapshot.data["data"][index]),
+                ),
+              );
+            },
+            onLongPress: () => shareGifUrl(
+              snapshot.data["data"][index]["images"]["fixed_height"]["url"],
             ),
           );
         } else {
@@ -147,5 +174,20 @@ class _HomePageState extends State<HomePage> {
         }
       },
     );
+  }
+
+  Future<void> shareGifUrl(String gifUrl) async {
+    final params = ShareParams(
+      text: 'Olha este GIF: $gifUrl',
+      // você pode colocar title ou subject se quiser
+      // subject: 'Veja isso!',
+    );
+    final result = await SharePlus.instance.share(params);
+    // Você pode checar o status:
+    if (result.status == ShareResultStatus.success) {
+      print('Compartilhado com sucesso!');
+    } else {
+      print('Compartilhamento cancelado ou falhou.');
+    }
   }
 }
